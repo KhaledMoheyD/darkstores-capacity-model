@@ -1,0 +1,36 @@
+﻿Darkstore Name,Asset Name,Asset Count,Max Capacity / asset,Utilization %,Sold Quantities,Orders,Basket Size
+North Warehouse,Freezer,4,500,92,3500,1100,3.2
+North Warehouse,Fridge,3,500,88,2800,900,3
+North Warehouse,Shelf,5,350,45,1600,500,2.2
+North Warehouse,Beauty,2,200,80,900,400,4.5
+North Warehouse,Water Pallets,6,300,95,2800,700,3.8
+South Hub,Freezer,2,500,55,1200,400,2.8
+South Hub,Fridge,2,500,70,1800,600,3.1
+South Hub,Shelf,8,350,82,3200,1000,3.3
+South Hub,Beauty,3,200,35,500,150,3
+South Hub,Water Pallets,4,300,50,1000,300,2.5
+East District,Freezer,6,500,110,5000,1600,3.5
+East District,Fridge,4,500,120,4200,1300,3.4
+East District,Shelf,3,350,68,2000,700,2.9
+East District,Beauty,1,200,45,400,120,3.2
+East District,Water Pallets,3,300,55,1100,320,2.8
+Central Hub,Freezer,3,500,80,2500,800,3
+Central Hub,Fridge,3,500,75,2200,700,2.9
+Central Hub,Shelf,4,350,85,2800,900,3.1
+Central Hub,Beauty,2,200,65,600,180,3.5
+Central Hub,Water Pallets,3,300,75,1500,450,3.2
+Downtown,Freezer,4,500,92,3500,1100,3.2
+Downtown,Fridge,3,500,88,2800,900,3
+Downtown,Shelf,5,350,45,1600,500,2.2
+Downtown,Beauty,2,200,80,900,400,4.5
+Downtown,Water Pallets,6,300,95,2800,700,3.8
+Uptown,Freezer,2,500,55,1200,400,2.8
+Uptown,Fridge,2,500,70,1800,600,3.1
+Uptown,Shelf,8,350,82,3200,1000,3.3
+Uptown,Beauty,3,200,35,500,150,3
+Uptown,Water Pallets,4,300,50,1000,300,2.5
+Eastside,Freezer,6,500,110,5000,1600,3.5
+Eastside,Fridge,4,500,120,4200,1300,3.4
+Eastside,Shelf,3,350,68,2000,700,2.9
+Eastside,Beauty,1,200,45,400,120,3.2
+Eastside,Water Pallets,3,300,55,1100,320,2.8
