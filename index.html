@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dark Stores Capacity Model • FMCG / Q‑commerce</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bf-primary: #F7921E;
+            --bf-primary-dark: #E07810;
+            --bf-primary-light: #FEF0E0;
+            --bf-primary-mid: #FDDCB5;
+            --bf-charcoal: #1A1A1A;
+            --bf-gray: #6B6B6B;
+            --bf-border: #E8E0D8;
+            --bf-bg: #FAFAF8;
+            --bf-white: #FFFFFF;
+            --increase-bg: #FEE2E2;
+            --increase-text: #991B1B;
+            --decrease-bg: #DBEAFE;
+            --decrease-text: #1E40AF;
+            --hold-bg: #D1FAE5;
+            --hold-text: #065F46;
+            --review-bg: #FEF3C7;
+            --review-text: #92400E;
+            --check-bg: #F3F4F6;
+            --check-text: #374151;
+        }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bf-bg); color: var(--bf-charcoal); font-size: 14px; line-height: 1.5; }
+        .header { background: var(--bf-charcoal); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .header-logo { display: flex; align-items: center; gap: 10px; }
+        .logo-mark { width: 32px; height: 32px; background: var(--bf-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .logo-mark svg { width: 20px; height: 20px; }
+        .header-title { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -0.2px; }
+        .header-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+        .header-badge { background: var(--bf-primary); color: white; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 40px; }
+        .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--bf-border); background: var(--bf-white); padding: 0 20px; }
+        .tab { padding: 11px 18px; font-size: 13px; font-weight: 500; color: var(--bf-gray); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; white-space: nowrap; }
+        .tab:hover { color: var(--bf-charcoal); }
+        .tab.active { color: var(--bf-primary); border-bottom-color: var(--bf-primary); }
+        .panel { display: none; padding: 20px; }
+        .panel.active { display: block; }
+        .results-subtabs { display: flex; gap: 0; border-bottom: 1px solid var(--bf-border); background: var(--bf-bg); margin-bottom: 20px; }
+        .subtab { padding: 8px 16px; font-size: 12px; font-weight: 500; color: var(--bf-gray); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+        .subtab:hover { color: var(--bf-charcoal); }
+        .subtab.active { color: var(--bf-primary); border-bottom-color: var(--bf-primary); }
+        .subpanel { display: none; }
+        .subpanel.active { display: block; }
+        .fp-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .btn-add { background: var(--bf-primary); color: #fff; border: none; padding: 7px 15px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.1s; }
+        .btn-add:hover { background: var(--bf-primary-dark); }
+        .btn-sm { background: transparent; border: 1px solid var(--bf-border); padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; cursor: pointer; color: var(--bf-gray); font-family: inherit; }
+        .btn-sm:hover { border-color: var(--bf-primary); color: var(--bf-primary); }
+        .btn-danger { border-color: #FCA5A5; color: #DC2626; }
+        .btn-danger:hover { border-color: #DC2626; background: #FEE2E2; }
+        .btn-export { background: var(--bf-white); border: 1px solid var(--bf-border); color: var(--bf-gray); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.1s; }
+        .btn-export:hover { border-color: var(--bf-primary); color: var(--bf-primary); background: var(--bf-primary-light); }
+        .csv-import-zone { border: 2px dashed var(--bf-border); border-radius: 18px; padding: 18px 16px; margin-bottom: 24px; background: var(--bf-white); transition: all 0.2s; cursor: pointer; text-align: center; position: relative; }
+        .csv-import-zone:hover, .csv-import-zone.drag-over { border-color: var(--bf-primary); background: var(--bf-primary-light); }
+        .csv-import-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .csv-icon { width: 44px; height: 44px; background: var(--bf-primary-light); border-radius: 60px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+        .csv-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .csv-sub { font-size: 11px; color: var(--bf-gray); }
+        .csv-columns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
+        .csv-col-tag { background: var(--bf-bg); border: 1px solid var(--bf-border); border-radius: 20px; padding: 3px 10px; font-size: 10px; font-weight: 500; }
+        .csv-feedback { margin-top: 12px; padding: 10px 14px; border-radius: 12px; font-size: 12px; font-weight: 500; display: none; }
+        .csv-feedback.success { display: block; background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+        .csv-feedback.error { display: block; background: #FEE2E2; color: #991B1B; }
+        .csv-feedback.info { display: block; background: var(--bf-primary-light); color: var(--bf-primary-dark); }
+        .fp-card { background: var(--bf-white); border: 1px solid var(--bf-border); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+        .fp-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
+        .fp-card-header:hover { background: var(--bf-bg); }
+        .fp-num { width: 28px; height: 28px; background: var(--bf-primary-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--bf-primary-dark); flex-shrink: 0; }
+        .fp-name-input { flex: 1; border: none; background: transparent; font-size: 14px; font-weight: 600; color: var(--bf-charcoal); outline: none; font-family: inherit; cursor: text; }
+        .fp-card-body { display: none; padding: 0 16px 18px; border-top: 1px solid var(--bf-border); }
+        .fp-card-body.open { display: block; }
+        .asset-section { margin-top: 18px; }
+        .asset-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .asset-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .dot-freeze { background: #3B82F6; }
+        .dot-fridge { background: #10B981; }
+        .dot-shelf { background: #8B5CF6; }
+        .dot-beauty { background: #EC4899; }
+        .dot-water { background: #06B6D4; }
+        .fields-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        @media (min-width: 500px) { .fields-row { grid-template-columns: repeat(6, 1fr); } }
+        .field { display: flex; flex-direction: column; gap: 4px; }
+        .field label { font-size: 10px; font-weight: 600; color: var(--bf-gray); text-transform: uppercase; letter-spacing: 0.3px; }
+        .field input { padding: 7px 8px; border: 1px solid var(--bf-border); border-radius: 8px; font-size: 12px; background: var(--bf-bg); font-family: inherit; outline: none; width: 100%; }
+        .field input:focus { border-color: var(--bf-primary); background: white; }
+        .action-buttons { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+        .run-top-container { margin-bottom: 24px; }
+        .run-btn-top { width: 100%; background: var(--bf-primary); color: white; border: none; padding: 12px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.15s; }
+        .run-btn-top:hover { background: var(--bf-primary-dark); }
+        .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .sum-card { background: var(--bf-white); border: 1px solid var(--bf-border); border-radius: 14px; padding: 12px 14px; }
+        .sum-val { font-size: 26px; font-weight: 700; line-height: 1.1; }
+        .sum-lbl { font-size: 11px; color: var(--bf-gray); margin-top: 6px; }
+        .sum-card.primary { background: var(--bf-primary); border-color: var(--bf-primary); }
+        .sum-card.primary .sum-val, .sum-card.primary .sum-lbl { color: white; }
+        .tbl-wrap { background: white; border: 1px solid var(--bf-border); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .tbl-filter { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--bf-border); flex-wrap: wrap; }
+        .filter-btn { padding: 5px 15px; border-radius: 40px; border: 1px solid var(--bf-border); background: var(--bf-bg); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+        .filter-btn.on { background: var(--bf-charcoal); color: white; border-color: var(--bf-charcoal); }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; padding: 12px 12px; background: var(--bf-bg); font-size: 10px; font-weight: 700; color: var(--bf-gray); text-transform: uppercase; border-bottom: 1px solid var(--bf-border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--bf-border); vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        .rec-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 40px; white-space: nowrap; }
+        .rec-increase { background: var(--increase-bg); color: var(--increase-text); }
+        .rec-decrease { background: var(--decrease-bg); color: var(--decrease-text); }
+        .rec-hold { background: var(--hold-bg); color: var(--hold-text); }
+        .rec-review { background: var(--review-bg); color: var(--review-text); }
+        .rec-check { background: var(--check-bg); color: var(--check-text); }
+        .ratio-high { color: #991B1B; font-weight: 700; }
+        .util-risk { color: #DC2626; font-weight: 600; }
+        .empty-state { padding: 40px 20px; text-align: center; color: var(--bf-gray); }
+        .heatmap-container { background: white; border: 1px solid var(--bf-border); border-radius: 16px; overflow-x: auto; padding: 20px; }
+        .heatmap-grid { display: flex; flex-direction: column; gap: 8px; min-width: 400px; }
+        .heatmap-row { display: flex; align-items: stretch; gap: 4px; }
+        .heatmap-fp-label { width: 180px; flex-shrink: 0; padding: 12px 8px; font-weight: 600; font-size: 13px; background: var(--bf-bg); border-radius: 8px; display: flex; align-items: center; }
+        .heatmap-assets { display: flex; flex: 1; gap: 4px; }
+        .heatmap-card { flex: 1; padding: 12px 8px; border-radius: 8px; text-align: center; transition: transform 0.15s; cursor: pointer; }
+        .heatmap-card:hover { transform: translateY(-2px); }
+        .heatmap-card.increase { background: var(--increase-bg); border: 1px solid var(--increase-text); }
+        .heatmap-card.decrease { background: var(--decrease-bg); border: 1px solid var(--decrease-text); }
+        .heatmap-card.hold { background: var(--hold-bg); border: 1px solid var(--hold-text); }
+        .heatmap-card.review { background: var(--review-bg); border: 1px solid var(--review-text); }
+        .heatmap-card.check { background: var(--check-bg); border: 1px solid var(--check-text); }
+        .heatmap-asset-name { font-size: 10px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px; opacity: 0.7; }
+        .heatmap-recommendation { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+        .heatmap-legend { display: flex; gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--bf-border); flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+        .legend-color { width: 20px; height: 20px; border-radius: 4px; }
+        .legend-color.increase { background: var(--increase-bg); border: 1px solid var(--increase-text); }
+        .legend-color.decrease { background: var(--decrease-bg); border: 1px solid var(--decrease-text); }
+        .legend-color.hold { background: var(--hold-bg); border: 1px solid var(--hold-text); }
+        .legend-color.review { background: var(--review-bg); border: 1px solid var(--review-text); }
+        .legend-color.check { background: var(--check-bg); border: 1px solid var(--check-text); }
+        .reason-cell { font-size: 11px; color: var(--bf-gray); max-width: 220px; line-height: 1.4; }
+        .asset-summary-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+        .asset-summary-table th, .asset-summary-table td { padding: 12px; border-bottom: 1px solid var(--bf-border); text-align: left; }
+        .asset-summary-table th { background: var(--bf-bg); font-weight: 700; color: var(--bf-gray); text-transform: uppercase; font-size: 10px; }
+        .asset-summary-table tr:last-child td { border-bottom: none; }
+        .action-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; margin-right: 4px; }
+        .badge-increase { background: var(--increase-bg); color: var(--increase-text); }
+        .badge-decrease { background: var(--decrease-bg); color: var(--decrease-text); }
+        .badge-hold { background: var(--hold-bg); color: var(--hold-text); }
+        .badge-review { background: var(--review-bg); color: var(--review-text); }
+        .rec-legend { background: white; border: 1px solid var(--bf-border); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+        .rec-legend h4 { font-size: 12px; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; color: var(--bf-gray); }
+        .legend-items { display: flex; flex-wrap: wrap; gap: 20px; row-gap: 12px; }
+        .legend-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+        .legend-pill .rec-pill { margin-right: 0; }
+        .suggested-change { font-weight: 600; color: var(--bf-primary-dark); }
+        @media (max-width: 768px) { .heatmap-fp-label { width: 120px; font-size: 11px; } .heatmap-card { padding: 8px 4px; } .heatmap-asset-name { font-size: 8px; } .heatmap-recommendation { font-size: 9px; } }
+    </style>
+</head>
+<body>
+<div style="background: var(--bf-bg); min-height: 100vh;">
+    <div class="header">
+        <div class="header-logo">
+            <div class="logo-mark">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="7" width="16" height="10" rx="2" fill="white" opacity=".9"></rect>
+                    <rect x="4" y="4" width="12" height="6" rx="2" fill="white" opacity=".6"></rect>
+                    <rect x="6" y="2" width="8" height="4" rx="1.5" fill="white" opacity=".35"></rect>
+                </svg>
+            </div>
+            <div>
+                <div class="header-title">Dark Stores Capacity Model</div>
+                <div class="header-sub">FMCG · Q‑commerce · Asset Optimization</div>
+            </div>
+        </div>
+       
+    </div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('input')">📦 Darkstore Data Entry</div>
+        <div class="tab" onclick="switchTab('results')">📊 Results &amp; Recommendations</div>
+        <div class="tab" onclick="switchTab('assets')">🏭 Assets Summary</div>
+    </div>
+
+    <!-- INPUT PANEL -->
+    <div class="panel active" id="tab-input">
+        <div class="csv-import-zone" id="csv-drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <input type="file" accept=".csv,text/csv" onchange="handleFileInput(event)">
+            <div class="csv-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <div class="csv-title">Import CSV</div>
+            <div class="csv-sub">Drag & drop or click · Columns: Darkstore Name, Asset Name, Asset Count, Max Capacity / asset, Utilization %, Sold Quantities, Orders, Basket Size</div>
+            <div class="csv-columns">
+                <span class="csv-col-tag">Darkstore Name</span>
+                <span class="csv-col-tag">Asset Name (freezer/fridge/shelf/beauty/water)</span>
+                <span class="csv-col-tag">Asset Count</span>
+                <span class="csv-col-tag">Max Capacity / asset</span>
+                <span class="csv-col-tag">Utilization %</span>
+                <span class="csv-col-tag">Sold Quantities</span>
+                <span class="csv-col-tag">Orders</span>
+                <span class="csv-col-tag">Basket Size</span>
+            </div>
+        </div>
+        <div class="csv-feedback success" id="csv-feedback" style="display: none;"></div>
+
+        <div class="run-top-container">
+            <button class="run-btn-top" onclick="runModel()">🚀 Run capacity optimization &nbsp;⟶</button>
+        </div>
+
+        <div class="fp-list-header">
+            <h3>🏪 Darkstores <span id="fp-count-badge" style="background: var(--bf-primary-light); color: var(--bf-primary-dark); padding: 2px 12px; border-radius: 30px; font-size: 12px;">0</span></h3>
+            <button class="btn-add" onclick="addFP()">+ Add a Dark Store</button>
+        </div>
+        <div id="fp-list"></div>
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+            <button class="btn-sm" onclick="loadDemo()">📊 Load demo (1 darkstore)</button>
+            <button class="btn-sm btn-danger" onclick="clearAll()">🗑️ Clear all</button>
+        </div>
+    </div>
+
+    <!-- RESULTS PANEL -->
+    <div class="panel" id="tab-results">
+        <div class="action-buttons">
+            <button class="btn-export" onclick="exportResultsToCSV()">📎 Export to CSV</button>
+        </div>
+        <div id="results-empty" class="empty-state" style="display: none;">✨ No results yet — add darkstore data or import CSV and run model.</div>
+        <div id="results-content" style="display: block;">
+            <div class="summary-bar" id="summary-bar"></div>
+
+            <div class="rec-legend">
+                <h4>📌 What the recommendations mean</h4>
+                <div class="legend-items">
+                    <div class="legend-pill"><span class="rec-pill rec-increase">↑ Increase</span> <span>→ Need more capacity (shortage)</span></div>
+                    <div class="legend-pill"><span class="rec-pill rec-decrease">↓ Decrease</span> <span>→ Too much capacity (over‑provisioned)</span></div>
+                    <div class="legend-pill"><span class="rec-pill rec-review">⚠ Review</span> <span>→ High utilisation but low demand share – check stock policy</span></div>
+                    <div class="legend-pill"><span class="rec-pill rec-hold">→ Hold</span> <span>→ Well balanced – no action needed</span></div>
+                    <div class="legend-pill"><span class="rec-pill rec-check">🔍 Check data</span> <span>→ Unusual pattern – verify input numbers</span></div>
+                </div>
+            </div>
+
+            <div class="results-subtabs">
+                <div class="subtab active" data-subtab="table" onclick="switchSubtab('table')">📋 Table View</div>
+                <div class="subtab" data-subtab="heatmap" onclick="switchSubtab('heatmap')">🗺️ Heatmap View</div>
+            </div>
+            <div class="subpanel active" id="subpanel-table">
+                <div class="tbl-wrap">
+                    <div class="tbl-filter">
+                        <label>🔍 Filter:</label>
+                        <button class="filter-btn on" data-f="all" onclick="applyFilter(this)">All</button>
+                        <button class="filter-btn f-increase" data-f="Increase" onclick="applyFilter(this)">Increase</button>
+                        <button class="filter-btn f-review" data-f="Review" onclick="applyFilter(this)">Review stock</button>
+                        <button class="filter-btn f-hold" data-f="Hold" onclick="applyFilter(this)">Hold</button>
+                        <button class="filter-btn f-decrease" data-f="Decrease" onclick="applyFilter(this)">Decrease</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Darkstore</th><th>Asset</th><th>Asset Count</th><th>Total Max Capacity</th><th>Utilization %</th>
+                                    <th>Demand share</th><th>Capacity share</th><th>Efficiency ratio</th><th>Action</th>
+                                    <th>Suggested Change</th><th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="insight-cards"></div>
+            </div>
+            <div class="subpanel" id="subpanel-heatmap">
+                <div class="heatmap-container">
+                    <div id="heatmap-content"></div>
+                    <div class="heatmap-legend">
+                        <div class="legend-item"><div class="legend-color increase"></div><span>↑ Increase capacity</span></div>
+                        <div class="legend-item"><div class="legend-color decrease"></div><span>↓ Decrease capacity</span></div>
+                        <div class="legend-item"><div class="legend-color hold"></div><span>→ Hold steady</span></div>
+                        <div class="legend-item"><div class="legend-color review"></div><span>⚠ Review stock</span></div>
+                        <div class="legend-item"><div class="legend-color check"></div><span>🔍 Check data</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSETS SUMMARY PANEL -->
+    <div class="panel" id="tab-assets">
+        <div id="assets-empty" class="empty-state" style="display: none;">📊 No asset data yet — run the model first.</div>
+        <div id="assets-content" style="display: none;">
+            <div class="tbl-wrap">
+                <div style="overflow-x: auto;">
+                    <table class="asset-summary-table">
+                        <thead>
+                            <tr><th>Asset Type</th><th>Total Asset Count</th><th>Total Max Capacity</th><th>Avg Utilization %</th><th>Increase (darkstores)</th><th>Decrease (darkstores)</th><th>Hold (darkstores)</th><th>Review (darkstores)</th></tr>
+                        </thead>
+                        <tbody id="assets-summary-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let fps = [];
+    let fpIdCounter = 0;
+    let allRows = [];
+
+    const ASSETS = [
+        { key: 'freeze', label: 'Freezer', dotClass: 'dot-freeze' },
+        { key: 'fridge', label: 'Fridge', dotClass: 'dot-fridge' },
+        { key: 'shelf', label: 'Shelf', dotClass: 'dot-shelf' },
+        { key: 'beauty', label: 'Beauty', dotClass: 'dot-beauty' },
+        { key: 'water', label: 'Water Pallets', dotClass: 'dot-water' }
+    ];
+    
+    const FIELDS = [
+        { k: 'n', label: 'Asset Count', step: 1, def: { freeze: 1, fridge: 1, shelf: 1, beauty: 1, water: 1 } },
+        { k: 'cap', label: 'Max Capacity / asset', step: 10, def: { freeze: 500, fridge: 500, shelf: 350, beauty: 200, water: 300 } },
+        { k: 'util', label: 'Utilization %', step: 1, def: { freeze: 65, fridge: 65, shelf: 55, beauty: 50, water: 60 } },
+        { k: 'sold', label: 'Sold Quantities', step: 100, def: { freeze: 2000, fridge: 1800, shelf: 1400, beauty: 800, water: 1200 } },
+        { k: 'ord', label: 'Orders', step: 50, def: { freeze: 700, fridge: 650, shelf: 500, beauty: 300, water: 450 } },
+        { k: 'bsk', label: 'Basket Size', step: 0.1, def: { freeze: 2.8, fridge: 2.7, shelf: 2.3, beauty: 4.0, water: 3.2 } }
+    ];
+
+    function fv(fpId, assetKey, fieldKey) { const el = document.getElementById(`fp${fpId}_${assetKey}_${fieldKey}`); return el ? (parseFloat(el.value) || 0) : 0; }
+    function fpName(fpId) { const el = document.getElementById('fp-name-' + fpId); return el ? el.value : 'Darkstore'; }
+
+    function getRecPriority(rec) {
+        switch (rec) {
+            case 'Increase': return 1;
+            case 'Decrease': return 2;
+            case 'Review':   return 3;
+            case 'Hold':     return 4;
+            case 'Check data': return 5;
+            default: return 6;
+        }
+    }
+
+    function getRecLabel(ratio, util) {
+        if (ratio > 1.15 && util >= 70) return 'Increase';
+        if (ratio > 1.15 && util > 85) return 'Increase';
+        if (ratio > 1.15 && util < 60) return 'Check data';
+        if (ratio < 0.85 && util > 85) return 'Review';
+        if (ratio < 0.85 && util < 60) return 'Decrease';
+        if (ratio < 0.85 && util >= 60 && util <= 85) return 'Decrease';
+        if (ratio >= 0.85 && ratio <= 1.15 && util >= 70) return 'Hold';
+        if (ratio > 1.25) return 'Increase';
+        return 'Hold';
+    }
+    
+    function getReason(rec, ratio, util) {
+        if (rec === 'Increase') {
+            return `Demand share is higher than capacity share (ratio ${ratio.toFixed(2)} > 1.15) and utilization ${util.toFixed(0)}% ≥ 70% → add capacity.`;
+        }
+        if (rec === 'Decrease') {
+            if (util < 60) {
+                return `Demand share is lower than capacity share (ratio ${ratio.toFixed(2)} < 0.85) and utilization is low (${util.toFixed(0)}% < 60%) → reduce capacity.`;
+            } else {
+                return `Demand share is lower than capacity share (ratio ${ratio.toFixed(2)} < 0.85) and capacity is significantly over‑provisioned (utilization ${util.toFixed(0)}%) → reduce capacity.`;
+            }
+        }
+        if (rec === 'Review') {
+            return `Utilization is high (${util.toFixed(0)}% > 85%) but demand share is low (ratio ${ratio.toFixed(2)} < 0.85) → check stock policy.`;
+        }
+        if (rec === 'Hold') {
+            if (ratio >= 0.85 && ratio <= 1.15) {
+                return `Demand and capacity are well balanced (ratio ${ratio.toFixed(2)} between 0.85 and 1.15).`;
+            } else {
+                return `Holding steady – no immediate action required, but monitor closely.`;
+            }
+        }
+        if (rec === 'Check data') {
+            return `Unusual pattern: high ratio (${ratio.toFixed(2)}) but low utilization (${util.toFixed(0)}%) → verify input data.`;
+        }
+        return 'No specific reason.';
+    }
+    
+    function getRecClass(label) {
+        if (label === 'Increase') return 'rec-increase';
+        if (label === 'Decrease') return 'rec-decrease';
+        if (label === 'Hold') return 'rec-hold';
+        if (label === 'Review') return 'rec-review';
+        if (label === 'Check data') return 'rec-check';
+        return 'rec-check';
+    }
+    function getHeatmapClass(label) {
+        if (label === 'Increase') return 'increase';
+        if (label === 'Decrease') return 'decrease';
+        if (label === 'Hold') return 'hold';
+        if (label === 'Review') return 'review';
+        if (label === 'Check data') return 'check';
+        return 'hold';
+    }
+    function getRatioClass(r) { if (r > 1.15) return 'ratio-high'; if (r >= 0.85) return 'ratio-ok'; return 'ratio-low'; }
+    function getUtilClass(u) { if (u > 85) return 'util-risk'; if (u >= 65) return 'util-ok'; return 'util-low'; }
+
+    function computeSuggestedChange(demandShare, totalCap, currentCount, maxCapPerUnit) {
+        if (maxCapPerUnit <= 0) return null;
+        const targetCapacity = demandShare * totalCap;
+        const targetCount = targetCapacity / maxCapPerUnit;
+        const delta = Math.round(targetCount - currentCount);
+        if (delta === 0) return null;
+        return delta;
+    }
+
+    function runModel() {
+        if (!fps.length) { alert("⚠️ Add at least one darkstore or import CSV before running."); return; }
+        allRows = [];
+        for (let fp of fps) {
+            const name = fpName(fp.id);
+            let assetsData = ASSETS.map(a => {
+                let n = fv(fp.id, a.key, 'n');
+                let cap = fv(fp.id, a.key, 'cap');
+                let util = fv(fp.id, a.key, 'util');
+                let sold = fv(fp.id, a.key, 'sold');
+                let ord = fv(fp.id, a.key, 'ord');
+                let bsk = fv(fp.id, a.key, 'bsk');
+                let instCap = n * cap;
+                return { label: a.label, dotClass: a.dotClass, n, cap, instCap, util, sold, ord, bsk, fpName: name, fpId: fp.id, key: a.key };
+            });
+            let totalCap = assetsData.reduce((s, a) => s + a.instCap, 1);
+            let totalSold = assetsData.reduce((s, a) => s + a.sold, 1);
+            let totalOrd = assetsData.reduce((s, a) => s + a.ord, 1);
+            let totalBsk = assetsData.reduce((s, a) => s + a.bsk, 1);
+            assetsData.forEach(a => {
+                let demandShare = 0.4 * (a.sold / totalSold) + 0.4 * (a.ord / totalOrd) + 0.2 * (a.bsk / totalBsk);
+                let capShare = a.instCap / totalCap;
+                let ratio = capShare > 0 ? demandShare / capShare : 0;
+                let rec = getRecLabel(ratio, a.util);
+                let reason = getReason(rec, ratio, a.util);
+                let suggestedChange = null;
+                if (rec === 'Increase' || rec === 'Decrease') {
+                    const delta = computeSuggestedChange(demandShare, totalCap, a.n, a.cap);
+                    if (delta !== null && delta !== 0) {
+                        suggestedChange = delta;
+                    }
+                }
+                allRows.push({ ...a, demandShare, capShare, ratio, rec, reason, suggestedChange });
+            });
+        }
+        renderResults();
+        renderAssetsSummary();
+        switchTab('results');
+    }
+
+    function renderAssetsSummary() {
+        const container = document.getElementById('assets-summary-body');
+        const emptyDiv = document.getElementById('assets-empty');
+        const contentDiv = document.getElementById('assets-content');
+        if (!allRows.length) {
+            emptyDiv.style.display = 'block';
+            contentDiv.style.display = 'none';
+            return;
+        }
+        emptyDiv.style.display = 'none';
+        contentDiv.style.display = 'block';
+        const assetGroups = new Map();
+        for (let row of allRows) {
+            if (!assetGroups.has(row.label)) assetGroups.set(row.label, []);
+            assetGroups.get(row.label).push(row);
+        }
+        let html = '';
+        for (let asset of ASSETS) {
+            const rows = assetGroups.get(asset.label) || [];
+            if (rows.length === 0) {
+                html += `<tr>
+                    <td><div class="asset-dot ${asset.dotClass}" style="display:inline-block; margin-right:8px;"></div>${asset.label}</td>
+                    <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td><td>0</td>
+                </tr>`;
+                continue;
+            }
+            let totalUnits = 0, totalCapacity = 0, weightedUtilSum = 0;
+            let fpIncrease = 0, fpDecrease = 0, fpHold = 0, fpReview = 0;
+            for (let row of rows) {
+                totalUnits += row.n;
+                totalCapacity += row.instCap;
+                weightedUtilSum += row.util * row.instCap;
+                if (row.rec === 'Increase') fpIncrease++;
+                else if (row.rec === 'Decrease') fpDecrease++;
+                else if (row.rec === 'Hold') fpHold++;
+                else if (row.rec === 'Review') fpReview++;
+            }
+            let avgUtil = totalCapacity > 0 ? weightedUtilSum / totalCapacity : 0;
+            html += `<tr>
+                <td><div class="asset-dot ${asset.dotClass}" style="display:inline-block; margin-right:8px;"></div>${asset.label}</td>
+                <td>${totalUnits.toLocaleString()}</td><td>${totalCapacity.toLocaleString()}</td><td>${avgUtil.toFixed(1)}%</td>
+                <td><span class="action-badge badge-increase">${fpIncrease}</span></td>
+                <td><span class="action-badge badge-decrease">${fpDecrease}</span></td>
+                <td><span class="action-badge badge-hold">${fpHold}</span></td>
+                <td><span class="action-badge badge-review">${fpReview}</span></td>
+            </tr>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function renderHeatmap() {
+        if (!allRows.length) return;
+        const fpGroups = new Map();
+        allRows.forEach(row => { if (!fpGroups.has(row.fpName)) fpGroups.set(row.fpName, []); fpGroups.get(row.fpName).push(row); });
+        let heatmapHtml = '<div class="heatmap-grid">';
+        for (let [fpName, rows] of fpGroups.entries()) {
+            heatmapHtml += `<div class="heatmap-row"><div class="heatmap-fp-label">${fpName}</div><div class="heatmap-assets">`;
+            for (let asset of ASSETS) {
+                const row = rows.find(r => r.label === asset.label);
+                if (row) {
+                    const recClass = getHeatmapClass(row.rec);
+                    const recIcon = row.rec === 'Increase' ? '↑' : row.rec === 'Decrease' ? '↓' : row.rec === 'Review' ? '⚠' : row.rec === 'Check data' ? '🔍' : '→';
+                    heatmapHtml += `<div class="heatmap-card ${recClass}" onclick="filterByRecommendation('${row.rec}')">
+                        <div class="heatmap-asset-name">${asset.label}</div>
+                        <div class="heatmap-recommendation">${recIcon} ${row.rec}</div>
+                    </div>`;
+                } else {
+                    heatmapHtml += `<div class="heatmap-card hold" style="opacity:0.3"><div class="heatmap-asset-name">${asset.label}</div><div class="heatmap-recommendation">—</div></div>`;
+                }
+            }
+            heatmapHtml += `</div></div>`;
+        }
+        heatmapHtml += '</div>';
+        document.getElementById('heatmap-content').innerHTML = heatmapHtml;
+    }
+    
+    function filterByRecommendation(rec) { switchSubtab('table'); const btn = Array.from(document.querySelectorAll('.filter-btn')).find(b => b.dataset.f === rec); if (btn) applyFilter(btn); }
+
+    function renderResults() {
+        if (!allRows.length) { document.getElementById('results-empty').style.display = 'block'; document.getElementById('results-content').style.display = 'none'; return; }
+        document.getElementById('results-empty').style.display = 'none';
+        document.getElementById('results-content').style.display = 'block';
+        let counts = { Increase: 0, Decrease: 0, Hold: 0, Review: 0 };
+        allRows.forEach(r => { if (counts[r.rec] !== undefined) counts[r.rec]++; });
+        const uniqFPs = new Set(allRows.map(r => r.fpId)).size;
+        document.getElementById('summary-bar').innerHTML = `
+            <div class="sum-card primary"><div class="sum-val">${uniqFPs}</div><div class="sum-lbl">Darkstores analyzed</div></div>
+            <div class="sum-card"><div class="sum-val" style="color:#991B1B">${counts.Increase}</div><div class="sum-lbl">Increase signals</div></div>
+            <div class="sum-card"><div class="sum-val" style="color:#92400E">${counts.Review}</div><div class="sum-lbl">Review stock</div></div>
+            <div class="sum-card"><div class="sum-val" style="color:#065F46">${counts.Hold}</div><div class="sum-lbl">Holding steady</div></div>
+            <div class="sum-card"><div class="sum-val" style="color:#1E40AF">${counts.Decrease}</div><div class="sum-lbl">Decrease signals</div></div>
+        `;
+        renderTable('all');
+        renderHeatmap();
+        const groups = new Map();
+        allRows.forEach(r => { if (!groups.has(r.fpName)) groups.set(r.fpName, []); groups.get(r.fpName).push(r); });
+        const insightDiv = document.getElementById('insight-cards');
+        insightDiv.innerHTML = '';
+        for (let [fpName, rows] of groups.entries()) {
+            const inc = rows.filter(r => r.rec === 'Increase').map(r => r.label);
+            const rev = rows.filter(r => r.rec === 'Review').map(r => r.label);
+            const dec = rows.filter(r => r.rec === 'Decrease').map(r => r.label);
+            let msg = '';
+            if (inc.length) msg += `<span style="color:#991B1B;font-weight:600">${inc.join(', ')}</span>: capacity shortage — expand assets. `;
+            if (rev.length) msg += `<span style="color:#92400E;font-weight:600">${rev.join(', ')}</span>: high utilization but demand mismatch — review stock policy. `;
+            if (dec.length) msg += `<span style="color:#1E40AF;font-weight:600">${dec.join(', ')}</span>: over‑allocated — reduce capacity. `;
+            if (msg) insightDiv.innerHTML += `<div style="background:var(--bf-white);border-left:4px solid var(--bf-primary);border-radius:0 12px 12px 0;padding:12px 16px;margin-bottom:12px;"><div style="font-weight:700;margin-bottom:5px;">📍 ${fpName}</div><div style="font-size:12px;color:#4B5563;">${msg}</div></div>`;
+        }
+    }
+
+    function renderTable(filterVal) {
+        const tbody = document.getElementById('results-body');
+        let rows = filterVal === 'all' ? [...allRows] : allRows.filter(r => r.rec === filterVal);
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="11" style="padding:24px;text-align:center">No assets match filter</td></tr>';
+            return;
+        }
+        // Group by FP
+        const fpGroups = new Map();
+        for (const row of rows) {
+            if (!fpGroups.has(row.fpId)) {
+                fpGroups.set(row.fpId, { fpName: row.fpName, assets: [] });
+            }
+            fpGroups.get(row.fpId).assets.push(row);
+        }
+        // Sort assets inside each FP by priority then ratio desc
+        for (const [_, group] of fpGroups.entries()) {
+            group.assets.sort((a, b) => {
+                const priorityA = getRecPriority(a.rec);
+                const priorityB = getRecPriority(b.rec);
+                if (priorityA !== priorityB) return priorityA - priorityB;
+                return b.ratio - a.ratio;
+            });
+        }
+        // Sort FPs by worst priority then highest ratio
+        const fpList = Array.from(fpGroups.values());
+        fpList.sort((a, b) => {
+            const minPriorityA = Math.min(...a.assets.map(asset => getRecPriority(asset.rec)));
+            const minPriorityB = Math.min(...b.assets.map(asset => getRecPriority(asset.rec)));
+            if (minPriorityA !== minPriorityB) return minPriorityA - minPriorityB;
+            const maxRatioA = Math.max(...a.assets.map(asset => asset.ratio));
+            const maxRatioB = Math.max(...b.assets.map(asset => asset.ratio));
+            return maxRatioB - maxRatioA;
+        });
+        tbody.innerHTML = '';
+        for (const group of fpList) {
+            const assets = group.assets;
+            for (let i = 0; i < assets.length; i++) {
+                const r = assets[i];
+                const showFP = (i === 0);
+                let changeText = '—';
+                if (r.suggestedChange !== null && r.suggestedChange !== 0) {
+                    const sign = r.suggestedChange > 0 ? '+' : '';
+                    changeText = `${sign}${r.suggestedChange} unit${Math.abs(r.suggestedChange) !== 1 ? 's' : ''}`;
+                }
+                tbody.innerHTML += `<tr>
+                    <td class="fp-label" style="${showFP ? '' : 'color:#D1D5DB'}">${showFP ? r.fpName : '└'}</td>
+                    <td><div style="display:flex;gap:6px;align-items:center"><div class="asset-dot ${r.dotClass}" style="width:7px;height:7px;"></div>${r.label}</div></td>
+                    <td>${r.n}</td>
+                    <td>${r.instCap.toLocaleString()}</td>
+                    <td class="${getUtilClass(r.util)}">${r.util.toFixed(0)}%</td>
+                    <td>${(r.demandShare * 100).toFixed(1)}%</td>
+                    <td>${(r.capShare * 100).toFixed(1)}%</td>
+                    <td class="${getRatioClass(r.ratio)}">${r.ratio.toFixed(2)}</td>
+                    <td><span class="rec-pill ${getRecClass(r.rec)}">${r.rec === 'Increase' ? '↑ Increase' : r.rec === 'Decrease' ? '↓ Decrease' : r.rec === 'Review' ? '⚠ Review' : r.rec === 'Check data' ? '🔍 Check data' : '→ Hold'}</span></td>
+                    <td class="suggested-change">${changeText}</td>
+                    <td class="reason-cell">${r.reason}</td>
+                </tr>`;
+            }
+        }
+    }
+
+    function applyFilter(btn) { document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on')); btn.classList.add('on'); renderTable(btn.dataset.f); }
+    function switchTab(id) { 
+        const tabs = ['input', 'results', 'assets'];
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', tabs[i] === id));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('tab-' + id).classList.add('active');
+        if (id === 'assets' && allRows.length) renderAssetsSummary();
+    }
+    function switchSubtab(subtabId) { document.querySelectorAll('.subtab').forEach(st => st.classList.remove('active')); document.querySelector(`.subtab[data-subtab="${subtabId}"]`).classList.add('active'); document.querySelectorAll('.subpanel').forEach(sp => sp.classList.remove('active')); document.getElementById(`subpanel-${subtabId}`).classList.add('active'); }
+
+    function exportResultsToCSV() {
+        if (!allRows.length) { alert("No results to export. Please run the model first."); return; }
+        const exportData = allRows.map(row => ({
+            darkstoreName: row.fpName, assetType: row.label, assetCount: row.n, totalMaxCapacity: row.instCap,
+            utilization: row.util, demandShare: row.demandShare, capacityShare: row.capShare,
+            efficiencyRatio: row.ratio, recommendation: row.rec, suggestedChange: row.suggestedChange !== null ? (row.suggestedChange > 0 ? `+${row.suggestedChange}` : `${row.suggestedChange}`) : '', reason: row.reason
+        }));
+        google.script.run
+            .withSuccessHandler(function(csvString) {
+                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                link.setAttribute('download', `darkstore_capacity_export_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            })
+            .withFailureHandler(function(error) { console.error(error); alert('Export failed. Please try again.'); })
+            .exportToCSV(exportData);
+    }
+
+    function normalizeAssetKey(raw) { 
+        const s = String(raw).toLowerCase(); 
+        if (s.includes('freez')) return 'freeze'; 
+        if (s.includes('fridge') || s.includes('refrig')) return 'fridge'; 
+        if (s.includes('shelf') || s.includes('stand')) return 'shelf'; 
+        if (s.includes('beauty')) return 'beauty'; 
+        if (s.includes('water') || s.includes('pallet')) return 'water'; 
+        return null; 
+    }
+    
+    function parseCSVLine(line) { let res = [], cur = '', inQ = false; for (let ch of line) { if (ch === '"') inQ = !inQ; else if (ch === ',' && !inQ) { res.push(cur); cur = ''; } else cur += ch; } res.push(cur); return res; }
+    
+    function processCSVFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const text = e.target.result;
+                const lines = text.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim());
+                if (!lines.length) throw new Error('Empty file');
+                let dataLines = lines;
+                if (lines[0].toLowerCase().includes('darkstore') || lines[0].toLowerCase().includes('fp name')) dataLines = lines.slice(1);
+                const fpMap = new Map();
+                for (let line of dataLines) {
+                    if (!line.trim()) continue;
+                    const cols = parseCSVLine(line);
+                    if (cols.length < 8) continue;
+                    let fp = cols[0].trim();
+                    let assetRaw = cols[1].trim();
+                    let assetCount = parseFloat(cols[2]) || 1;
+                    let maxCapacity = parseFloat(cols[3]) || 0;
+                    let utilization = parseFloat(cols[4]) || 0;
+                    let soldQty = parseFloat(cols[5]) || 0;
+                    let orders = parseFloat(cols[6]) || 0;
+                    let basketSize = parseFloat(cols[7]) || 0;
+                    if (!fp) continue;
+                    const aKey = normalizeAssetKey(assetRaw);
+                    if (!aKey) continue;
+                    if (!fpMap.has(fp)) fpMap.set(fp, { freeze: null, fridge: null, shelf: null, beauty: null, water: null });
+                    let obj = fpMap.get(fp);
+                    if (!obj[aKey]) obj[aKey] = { n: 0, cap: 0, util: 0, sold: 0, ord: 0, bsk: 0, count: 0 };
+                    let cur = obj[aKey];
+                    if (cur.count === 0) {
+                        cur.n = assetCount; cur.cap = maxCapacity; cur.util = utilization; cur.sold = soldQty; cur.ord = orders; cur.bsk = basketSize; cur.count = 1;
+                    } else {
+                        cur.sold += soldQty; cur.ord += orders; cur.bsk = (cur.bsk + basketSize) / 2; cur.util = (cur.util + utilization) / 2;
+                        cur.n = Math.max(cur.n, assetCount); cur.cap = Math.max(cur.cap, maxCapacity); cur.count++;
+                    }
+                }
+                let newFps = [];
+                for (let [name, assets] of fpMap.entries()) {
+                    let data = {};
+                    for (let a of ASSETS) {
+                        let raw = assets[a.key];
+                        if (raw) { data[a.key] = { n: raw.n, cap: raw.cap, util: raw.util, sold: raw.sold, ord: raw.ord, bsk: raw.bsk }; }
+                        else { data[a.key] = { n: 1, cap: a.key === 'shelf' ? 350 : a.key === 'beauty' ? 200 : a.key === 'water' ? 300 : 500, util: 55, sold: 1000, ord: 400, bsk: 2.5 }; }
+                    }
+                    newFps.push({ name, data });
+                }
+                if (!newFps.length) throw new Error('No valid darkstore rows');
+                fps = []; fpIdCounter = 0;
+                newFps.forEach(fpData => addFP(fpData));
+                const fb = document.getElementById('csv-feedback');
+                fb.className = 'csv-feedback success';
+                fb.style.display = 'block';
+                fb.innerHTML = `✓ Imported ${newFps.length} darkstore(s) with asset data.`;
+                setTimeout(() => fb.style.display = 'none', 3200);
+            } catch (err) { alert("CSV error: " + err.message); }
+        };
+        reader.readAsText(file);
+    }
+    
+    function handleFileInput(e) { if (e.target.files[0]) processCSVFile(e.target.files[0]); e.target.value = ''; }
+    function handleDragOver(e) { e.preventDefault(); document.getElementById('csv-drop-zone').classList.add('drag-over'); }
+    function handleDragLeave(e) { document.getElementById('csv-drop-zone').classList.remove('drag-over'); }
+    function handleDrop(e) { e.preventDefault(); document.getElementById('csv-drop-zone').classList.remove('drag-over'); if (e.dataTransfer.files[0]) processCSVFile(e.dataTransfer.files[0]); }
+
+    function renderFPList() {
+        const container = document.getElementById('fp-list');
+        if (!fps.length) { container.innerHTML = '<div class="empty-state">➕ Click "Add Darkstore" or import CSV to start</div>'; document.getElementById('fp-count-badge').innerText = '0'; return; }
+        document.getElementById('fp-count-badge').innerText = fps.length;
+        container.innerHTML = '';
+        fps.forEach((fp, idx) => {
+            const card = document.createElement('div'); card.className = 'fp-card';
+            let bodyHtml = '';
+            for (let a of ASSETS) {
+                let assetData = fp.data?.[a.key] || { n: 1, cap: 500, util: 60, sold: 1500, ord: 600, bsk: 2.5 };
+                let rowFields = '';
+                for (let f of FIELDS) {
+                    let val = assetData[f.k];
+                    rowFields += `<div class="field"><label>${f.label}</label><input type="number" id="fp${fp.id}_${a.key}_${f.k}" value="${val}" step="${f.step}" min="0"></div>`;
+                }
+                bodyHtml += `<div class="asset-section"><div class="asset-label"><div class="asset-dot ${a.dotClass}"></div><span>${a.label}</span></div><div class="fields-row">${rowFields}</div></div>`;
+            }
+            card.innerHTML = `<div class="fp-card-header" onclick="toggleFP(${fp.id})"><div class="fp-num">${idx+1}</div><input class="fp-name-input" id="fp-name-${fp.id}" value="${fp.name}" onclick="event.stopPropagation()"><button class="btn-sm btn-danger" onclick="event.stopPropagation();removeFP(${fp.id})">Remove</button><span id="fp-chevron-${fp.id}" style="font-size:18px;">∨</span></div><div class="fp-card-body open" id="fp-body-${fp.id}">${bodyHtml}</div>`;
+            container.appendChild(card);
+        });
+    }
+    
+    function toggleFP(id) { const b = document.getElementById(`fp-body-${id}`); const c = document.getElementById(`fp-chevron-${id}`); if (b) { b.classList.toggle('open'); c.innerHTML = b.classList.contains('open') ? '∨' : '›'; } }
+    function addFP(prefillData) { 
+        fpIdCounter++; const id = fpIdCounter; 
+        const defaultData = {
+            freeze: { n: 1, cap: 500, util: 65, sold: 1800, ord: 650, bsk: 2.7 },
+            fridge: { n: 1, cap: 500, util: 68, sold: 1700, ord: 620, bsk: 2.6 },
+            shelf: { n: 1, cap: 350, util: 55, sold: 1500, ord: 520, bsk: 2.3 },
+            beauty: { n: 1, cap: 200, util: 50, sold: 800, ord: 300, bsk: 4.0 },
+            water: { n: 1, cap: 300, util: 60, sold: 1200, ord: 450, bsk: 3.2 }
+        };
+        fps.push({ id, name: prefillData?.name || `Darkstore ${id}`, data: prefillData?.data || defaultData }); 
+        renderFPList(); 
+    }
+    function removeFP(id) { fps = fps.filter(f => f.id !== id); renderFPList(); }
+    function loadDemo() { 
+        fps = []; fpIdCounter = 0; 
+        const demoFPs = [
+            { name: 'North Warehouse', data: { freeze: { n: 4, cap: 500, util: 92, sold: 3500, ord: 1100, bsk: 3.2 }, fridge: { n: 3, cap: 500, util: 88, sold: 2800, ord: 900, bsk: 3.0 }, shelf: { n: 5, cap: 350, util: 45, sold: 1600, ord: 500, bsk: 2.2 }, beauty: { n: 2, cap: 200, util: 80, sold: 900, ord: 400, bsk: 4.5 }, water: { n: 6, cap: 300, util: 95, sold: 2800, ord: 700, bsk: 3.8 } } }
+        ];
+        demoFPs.forEach(d => addFP(d)); 
+        renderFPList(); 
+        document.getElementById('csv-feedback').style.display = 'none'; 
+    }
+    function clearAll() { fps = []; renderFPList(); allRows = []; document.getElementById('results-content').style.display = 'none'; document.getElementById('results-empty').style.display = 'block'; document.getElementById('csv-feedback').style.display = 'none'; }
+    
+    window.switchTab = switchTab; window.switchSubtab = switchSubtab; window.applyFilter = applyFilter; window.toggleFP = toggleFP; window.removeFP = removeFP; window.addFP = addFP; window.runModel = runModel; window.loadDemo = loadDemo; window.clearAll = clearAll; window.handleDragOver = handleDragOver; window.handleDragLeave = handleDragLeave; window.handleDrop = handleDrop; window.handleFileInput = handleFileInput; window.exportResultsToCSV = exportResultsToCSV; window.filterByRecommendation = filterByRecommendation;
+    
+    renderFPList();
+</script>
+</body>
+</html>
