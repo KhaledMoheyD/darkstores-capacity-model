@@ -78,4 +78,4 @@ MIT – free to use and modify.
 
 ## Author
 
-[Khaled Mohey Elden] – [[GitHub Profile URL](https://github.com/khaledmoheyd)]
+[Khaled Mohey Elden](https://github.com/khaledmoheyd)
