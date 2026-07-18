@@ -21,6 +21,16 @@ It helps operations managers balance demand vs. capacity by calculating efficien
 ### Assets Summary Pivot Table
 <img width="1907" height="498" alt="Screenshot_7" src="https://github.com/user-attachments/assets/36408aa3-fd46-4d22-84b0-26c1cee42138" />
 
+### Key Metrics and Formulas
+
+| Metric | Formula | Purpose |
+| :--- | :--- | :--- |
+| **Demand Share** | `(Sold% × 0.4) + (Orders% × 0.4) + (Basket% × 0.2)` | Demand flowing through this asset |
+| **Capacity Share** | `Asset Count / Total Asset Count` | Proportion of assets allocated |
+| **Efficiency Ratio** | `Demand Share / Capacity Share` | Compare demand vs allocation |
+| **Total Max Capacity** | `Asset Count × Max Capacity/asset` | Total installed capacity (display only) |
+| **Shelf Equivalent** | `Asset Count / Conversion Factor` | Standardised unit (display only) |
+
 
 ## Features
 
